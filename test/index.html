@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <title>Galton Board</title>
+    <style>
+      .pin {
+        fill: black;
+      }
+      .ball {
+        fill: steelblue;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="board"></div>
+    <p id="counts"></p>
+    <script>
+      // Define constants for the Galton Board
+      const BALL_RADIUS = 5; // Radius of the balls
+      const BOARD_WIDTH = 600; // Width of the board
+      const NUM_ROWS = 10; // Number of rows in the board
+      const BOARD_HEIGHT = 500;
+
+      const PROBABILITY = 0.5; // Probability of a ball going left or right
+
+      // Create the SVG container
+      const svg = d3
+        .select("#board")
+        .append("svg")
+        .attr("width", BOARD_WIDTH)
+        .attr("height", BOARD_HEIGHT);
+
+      // Create the pins
+      const pins = [];
+      for (let i = 0; i <= NUM_ROWS; i++) {
+        const row = [];
+        for (let j = 0; j <= i; j++) {
+            const x = (j - i / 2) * (BOARD_WIDTH / (i + 1)) + BOARD_WIDTH / 2;
+            const y = (i + 1) * (BOARD_HEIGHT / (NUM_ROWS + 1));
+            
+          const pin = { x: x, y: y };
+          row.push(pin);
+        }
+        pins.push(row);
+      }
+
+      // Draw the pins
+      svg
+        .selectAll(".pin")
+        .data(pins)
+        .enter()
+        .append("g")
+        .attr("class", "row")
+        .selectAll(".pin")
+        .data((d) => d)
+        .enter()
+        .append("circle")
+        .attr("class", "pin")
+        .attr("cx", (d) => d.x)
+        .attr("cy", (d) => d.y)
+        .attr("r", 3)
+        .attr("fill", "black");
+
+      // Define the initial position of the ball
+      const counts = new Array(NUM_ROWS + 1).fill(0);
+           // Add a ball to the top of the board
+           function addBall() {
+            let ball = svg.append("circle")
+              .attr("class", "ball")
+              .attr("r", BALL_RADIUS)
+              .attr("cx", BOARD_WIDTH / 2)
+              .attr("cy", 0);
+    
+            let currentRow = 0;
+            let currentX = BOARD_WIDTH / 2;
+    
+            // Move the ball down the board
+            let interval = setInterval(() => {
+              if (currentRow === NUM_ROWS) {
+                // If the ball reaches the bottom, remove it and increment the count
+                clearInterval(interval);
+                ball.remove();
+                counts[currentRow]++;
+                updateCounts();
+                return;
+              }
+    
+              // Determine whether the ball goes left or right
+              const direction = Math.random() < PROBABILITY ? -1 : 1;
+              currentX += direction * (BOARD_WIDTH / (currentRow + 2));
+    
+              // Determine the next row
+              currentRow++;
+    
+              // Update the position of the ball
+              ball.attr("cx", currentX)
+                  .attr("cy", currentRow * (BOARD_HEIGHT / (NUM_ROWS + 1)));
+            }, 50);
+          }
+    
+          // Update the count of balls in each row
+          function updateCounts() {
+            d3.select("#counts")
+              .selectAll("p")
+              .data(counts)
+              .text((d) => d);
+          }
+    
+          // Add a button to add balls to the board
+          d3.select("body")
+            .append("div")
+            .append("button")
+            .text("Add Ball")
+            .on("click", addBall);
+        </script>
+      </body>
+    </html>
+    
